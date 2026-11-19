@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.backup
+*_backup*.py
+config.py
+.env
+*.apk
+.buildozer/
+.git/
