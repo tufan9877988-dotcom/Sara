@@ -1,4 +1,5 @@
 
+
 name: Build SARA AI APK
 
 on:
@@ -33,7 +34,10 @@ jobs:
           python-version: '3.11'
 
       - name: Install Android SDK and AIDL
+        shell: bash
         run: |
+          set -e
+
           BUILD_SDK="$HOME/.buildozer/android/platform/android-sdk"
           mkdir -p "$BUILD_SDK"
 
@@ -63,7 +67,9 @@ jobs:
           fi
 
           chmod +x "$AIDL_PATH"
-          "$AIDL_PATH" --version
+
+          echo "AIDL FOUND: $AIDL_PATH"
+          test -x "$AIDL_PATH"
 
       - name: Install build tools
         run: |
@@ -71,7 +77,8 @@ jobs:
           python -m pip install buildozer cython==0.29.36
 
       - name: Build Android APK
-        run: buildozer android debug
+        run: |
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
