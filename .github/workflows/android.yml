@@ -32,24 +32,38 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Accept Android SDK Licenses
+      - name: Install Android SDK and AIDL
         run: |
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          BUILD_SDK="$HOME/.buildozer/android/platform/android-sdk"
+          mkdir -p "$BUILD_SDK"
 
-          if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
-          fi
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)
 
-          if [ ! -x "$SDKMANAGER" ]; then
-            echo "ERROR: Android SDK Manager not found"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: SDK Manager not found"
             exit 1
           fi
 
-          echo "ANDROIDSDK=$ANDROID_HOME" >> "$GITHUB_ENV"
+          yes | "$SDKMANAGER" --sdk_root="$BUILD_SDK" --licenses
 
-          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses
+          "$SDKMANAGER" --sdk_root="$BUILD_SDK" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;37.0.0"
 
-          "$SDKMANAGER" --sdk_root="$ANDROID_HOME" "platform-tools" "build-tools;37.0.0"
+          echo "ANDROIDSDK=$BUILD_SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$BUILD_SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$BUILD_SDK" >> "$GITHUB_ENV"
+
+          AIDL_PATH=$(find "$BUILD_SDK/build-tools" -name aidl -type f | head -n 1)
+
+          if [ -z "$AIDL_PATH" ]; then
+            echo "ERROR: AIDL not found"
+            exit 1
+          fi
+
+          chmod +x "$AIDL_PATH"
+          "$AIDL_PATH" --version
 
       - name: Install build tools
         run: |
