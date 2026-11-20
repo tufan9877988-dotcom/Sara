@@ -48,8 +48,10 @@ jobs:
             exit 1
           fi
 
-          yes | "$SDKMANAGER" --sdk_root="$BUILD_SDK" --licenses
+          echo "Accepting Android SDK licenses..."
+          yes | "$SDKMANAGER" --sdk_root="$BUILD_SDK" --licenses || true
 
+          echo "Installing Android SDK packages..."
           "$SDKMANAGER" --sdk_root="$BUILD_SDK" \
             "platform-tools" \
             "platforms;android-35" \
@@ -67,7 +69,6 @@ jobs:
           fi
 
           chmod +x "$AIDL_PATH"
-
           echo "AIDL FOUND: $AIDL_PATH"
           test -x "$AIDL_PATH"
 
@@ -86,3 +87,4 @@ jobs:
           name: SARA-AI-APK
           path: bin/*.apk
           if-no-files-found: error
+          
