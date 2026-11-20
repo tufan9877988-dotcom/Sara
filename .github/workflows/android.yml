@@ -49,7 +49,7 @@ jobs:
             exit 1
           fi
 
-          chmod +x "$SDKMANAGER"
+          echo "SDK Manager found: $SDKMANAGER"
 
           echo "Accepting Android SDK licenses..."
           yes | "$SDKMANAGER" --sdk_root="$BUILD_SDK" --licenses || true
@@ -71,19 +71,23 @@ jobs:
             exit 1
           fi
 
-          chmod +x "$AIDL_PATH"
+          if [ ! -x "$AIDL_PATH" ]; then
+            echo "ERROR: AIDL is not executable: $AIDL_PATH"
+            exit 1
+          fi
+
           echo "AIDL FOUND: $AIDL_PATH"
 
           mkdir -p "$BUILD_SDK/tools/bin"
 
           cat > "$BUILD_SDK/tools/bin/sdkmanager" <<EOF
           #!/bin/bash
-          exec "$SDKMANAGER" "\$@"
+          exec "$SDKMANAGER" --sdk_root="$BUILD_SDK" "\$@"
           EOF
 
           chmod +x "$BUILD_SDK/tools/bin/sdkmanager"
 
-          echo "Buildozer sdkmanager path:"
+          echo "Checking Buildozer SDK Manager..."
           "$BUILD_SDK/tools/bin/sdkmanager" --version
 
       - name: Install build tools
