@@ -1,5 +1,6 @@
 
 
+
 name: Build SARA AI APK
 
 on:
@@ -48,6 +49,8 @@ jobs:
             exit 1
           fi
 
+          chmod +x "$SDKMANAGER"
+
           echo "Accepting Android SDK licenses..."
           yes | "$SDKMANAGER" --sdk_root="$BUILD_SDK" --licenses || true
 
@@ -70,7 +73,18 @@ jobs:
 
           chmod +x "$AIDL_PATH"
           echo "AIDL FOUND: $AIDL_PATH"
-          test -x "$AIDL_PATH"
+
+          mkdir -p "$BUILD_SDK/tools/bin"
+
+          cat > "$BUILD_SDK/tools/bin/sdkmanager" <<EOF
+          #!/bin/bash
+          exec "$SDKMANAGER" "\$@"
+          EOF
+
+          chmod +x "$BUILD_SDK/tools/bin/sdkmanager"
+
+          echo "Buildozer sdkmanager path:"
+          "$BUILD_SDK/tools/bin/sdkmanager" --version
 
       - name: Install build tools
         run: |
@@ -87,4 +101,3 @@ jobs:
           name: SARA-AI-APK
           path: bin/*.apk
           if-no-files-found: error
-          
