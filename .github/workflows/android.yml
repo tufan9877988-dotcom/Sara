@@ -15,6 +15,46 @@ jobs:
       - name: Get project files
         uses: actions/checkout@v4
 
+      - name: Configure buildozer.spec for compatibility
+        run: |
+          python3 - <<'EOF'
+          from pathlib import Path
+
+          spec_path = Path("buildozer.spec")
+          if not spec_path.exists():
+              raise SystemExit("buildozer.spec not found")
+
+          lines = spec_path.read_text(encoding="utf-8").splitlines()
+          updated = []
+          set_ndk = False
+          set_api = False
+
+          for line in lines:
+              stripped = line.strip()
+              if stripped.startswith("android.ndk") and "=" in stripped and not stripped.startswith("#"):
+                  updated.append("android.ndk = 25c")
+                  set_ndk = True
+              elif stripped.startswith("android.api") and "=" in stripped and not stripped.startswith("#"):
+                  updated.append("android.api = 34")
+                  set_api = True
+              else:
+                  updated.append(line)
+
+          if not set_ndk or not set_api:
+              for i, line in enumerate(updated):
+                  if line.strip() == "[app]":
+                      inserts = []
+                      if not set_ndk:
+                          inserts.append("android.ndk = 25c")
+                      if not set_api:
+                          inserts.append("android.api = 34")
+                      updated[i + 1:i + 1] = inserts
+                      break
+
+          spec_path.write_text("\n".join(updated) + "\n", encoding="utf-8")
+          print("Updated buildozer.spec with android.ndk = 25c and android.api = 34")
+          EOF
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -45,9 +85,9 @@ jobs:
           path: |
             ~/.buildozer
             ~/.gradle
-          key: buildozer-sara-v2-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          key: buildozer-sara-v3-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            buildozer-sara-v2-${{ runner.os }}-
+            buildozer-sara-v3-${{ runner.os }}-
 
       - name: Install Android SDK Command Line Tools
         shell: bash
@@ -88,8 +128,8 @@ jobs:
 
           "$SDKMANAGER" --sdk_root="$BUILD_SDK" \
             "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
+            "platforms;android-34" \
+            "build-tools;34.0.0"
 
       - name: Install build tools
         run: |
